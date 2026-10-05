@@ -14,7 +14,7 @@ uses
   Windows, SysUtils, Classes, DateUtils;
 
 const
-  Version = '1.0';
+  Version = '1.1';
 
   JamSig: array[0..3] of Char = ('J', 'A', 'M', #0);
 
