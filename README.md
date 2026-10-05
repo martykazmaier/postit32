@@ -14,6 +14,12 @@ Set the `RA` environment variable to your EleBBS system directory, the one conta
 SET RA=C:\ELE
 ```
 
+Optionally set `TZ` to your UTC offset as `[+|-]hhmm` to add a `TZUTC` kludge to each message:
+
+```
+SET TZ=-700
+```
+
 ## Usage
 
 ```
@@ -50,6 +56,7 @@ The program exits with code 0 on success and 1 on any error, so batch files can 
 - **Area lookup:** the area is found by number in `%RA%\MESSAGES.RA`, which supplies the JAM base path, origin line and AKA. `%RA%\MESSAGES.ELE` is checked so that Squish areas are rejected.
 - **Echomail address:** taken from the area's AKA. AKAs 0 to 9 come from `CONFIG.RA` and AKAs 10 and up from `AKAS.BBS`. Use `/A:` to override it.
 - **Echomail extras:** a MSGID, a tear line and an origin line are added. The message is also listed in `ECHOMAIL.JAM` in the message base path from `CONFIG.RA`, so your tosser scans and exports it.
+- **Time zone:** if `TZ` is set, a `TZUTC` kludge is added (for example `TZ=-700` gives `TZUTC: -0700`). Forms like `-0700`, `-7` and `-07:00` also work. An unreadable `TZ` gives a warning, and the message is posted without the kludge.
 - **Writing:** the JAM base is locked while the message is written, so it's safe to run while the BBS is up. A missing JAM base is created.
 - **Text:** CRLF and LF line endings are converted to CR, and a trailing Ctrl-Z is removed.
 

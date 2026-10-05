@@ -29,7 +29,7 @@ const
   SF_MSGID        = 4;
   SF_SUBJECT      = 6;
   SF_PID          = 7;
-
+  SF_FTSKLUDGE    = 2000;
   AREA_LOCALMAIL = 0;
   AREA_ECHOMAIL  = 2;
   AREA_IS_JAM    = $80;
@@ -134,6 +134,7 @@ var
   OptFile, OptBoard, OptSubject, OptFrom, OptTo, OptAddr, OptOrigin: string;
   OptLocal, OptEcho, OptPrivate: Boolean;
   RaDir: string;
+  TzUtc: string;
 
 procedure Fail(const Msg: string);
 begin
@@ -162,6 +163,7 @@ begin
   WriteLn;
   WriteLn('Put quotes around values containing spaces, e.g. "/S:Weekly News".');
   WriteLn('The RA environment variable must point to the EleBBS system directory.');
+  WriteLn('If TZ is set to the UTC offset (e.g. TZ=-700), a TZUTC kludge is added.');
 end;
 
 procedure InitCrcTable;
@@ -460,6 +462,40 @@ begin
   end;
 end;
 
+{ TZ holds the UTC offset as [+|-]hhmm, e.g. "-700", "-0700", "+530"
+  or "-7". Returns it in TZUTC form ("-0700", "0530"), or '' if invalid. }
+function TzUtcFromEnv(const TZ: string): string;
+var
+  S, Digits: string;
+  Negative: Boolean;
+  Hours, Mins, i: Integer;
+begin
+  Result := '';
+  S := StringReplace(Trim(TZ), ':', '', []);
+  Negative := (S <> '') and (S[1] = '-');
+  if (S <> '') and (S[1] in ['+', '-']) then Delete(S, 1, 1);
+
+  Digits := S;
+  if (Digits = '') or (Length(Digits) > 4) then Exit;
+  for i := 1 to Length(Digits) do
+    if not (Digits[i] in ['0'..'9']) then Exit;
+
+  if Length(Digits) <= 2 then
+  begin
+    Hours := StrToInt(Digits);
+    Mins := 0;
+  end
+  else
+  begin
+    Hours := StrToInt(Copy(Digits, 1, Length(Digits) - 2));
+    Mins := StrToInt(Copy(Digits, Length(Digits) - 1, 2));
+  end;
+  if (Hours > 14) or (Mins > 59) then Exit;
+
+  if Negative and ((Hours <> 0) or (Mins <> 0)) then Result := '-';
+  Result := Result + Format('%.2d%.2d', [Hours, Mins]);
+end;
+
 procedure TouchFile(const FileName: string);
 begin
   if not FileExists(FileName) then
@@ -562,6 +598,8 @@ begin
     AddSubfield(Sub, SF_RECEIVERNAME, OptTo);
     AddSubfield(Sub, SF_SUBJECT, OptSubject);
     AddSubfield(Sub, SF_PID, 'PostIt32 ' + Version);
+    if TzUtc <> '' then
+      AddSubfield(Sub, SF_FTSKLUDGE, 'TZUTC: ' + TzUtc);
 
     FillChar(MsgHdr, SizeOf(MsgHdr), 0);
     Move(JamSig, MsgHdr.Signature, 4);
@@ -649,6 +687,14 @@ begin
 
     RaDir := GetEnvironmentVariable('RA');
     if RaDir <> '' then RaDir := IncludeTrailingPathDelimiter(RaDir);
+
+    if GetEnvironmentVariable('TZ') <> '' then
+    begin
+      TzUtc := TzUtcFromEnv(Trim(GetEnvironmentVariable('TZ')));
+      if TzUtc = '' then
+        WriteLn('Warning: cannot read TZ="', GetEnvironmentVariable('TZ'),
+          '"; no TZUTC kludge added.');
+    end;
 
     ResolveBoard(JamBase, AreaName, AreaOrigin, Aka);
     if OptEcho and (OptAddr = '') then
