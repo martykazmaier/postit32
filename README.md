@@ -70,4 +70,6 @@ fpc -O2 postit32.pas
 
 ## License
 
-No license has been chosen yet.
+Copyright (C) 2026 Martin Kazmaier.
+
+PostIt32 may be distributed under the terms of the [Q Public License version 1.0](LICENSE). Source code is available free of charge from this repository.

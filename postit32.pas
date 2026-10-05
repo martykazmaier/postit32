@@ -1,7 +1,12 @@
 program PostIt32;
 
 { Posts a text file as a message into an EleBBS JAM message area,
-  as either local mail or echomail. }
+  as either local mail or echomail.
+
+  Copyright (C) 2026 Martin Kazmaier
+
+  This software may be distributed under the terms of the Q Public
+  License version 1.0. See the LICENSE file for details. }
 
 {$mode objfpc}{$H+}
 
